@@ -6,24 +6,22 @@ pub mod evcxr;
 use petgraph::data::*;
 use petgraph::visit::*;
 
-pub struct StateMachine<'a, G, E, N, NW, EW, Input, Action>
+pub struct StateMachine<'a, G, Input, Action>
 where
-    G: GraphBase<EdgeId = E, NodeId = N> + Data<NodeWeight = NW, EdgeWeight = EW>,
-    E: Copy + PartialEq,
-    N: Copy + PartialEq,
+    G: GraphBase + Data,
 {
     state_network: G,
-    state: N,
-    match_inputs: &'a dyn Fn(Input, EW) -> Option<Action>,
+    state: G::NodeId,
+    match_inputs: &'a dyn Fn(Input, G::EdgeWeight) -> Option<Action>,
 }
 
-fn get_id_for_state<'a, G, NW, EW>(
+fn get_id_for_state<'a, G>(
     network: &'a G,
-    state: NW,
-) -> Option<<&'a G as GraphBase>::NodeId>
+    state: <G as Data>::NodeWeight,
+) -> Option<<G as GraphBase>::NodeId>
 where
-    &'a G: IntoNodeReferences + GraphBase + DataMap + Data<NodeWeight = NW, EdgeWeight = EW>,
-    NW: PartialEq,
+    G: IntoNodeReferences + GraphBase + DataMap + Data,
+    <G as Data>::NodeWeight: PartialEq,
 {
     for nr in network.node_references() {
         if *(network.node_weight(nr.id())).unwrap() == state {
@@ -33,25 +31,23 @@ where
     return None;
 }
 
-impl<'a, G, E, N, EW, NW, Input, Action> StateMachine<'a, G, E, N, NW, EW, Input, Action>
+impl<'a, G, Input, Action> StateMachine<'a, G, Input, Action>
 where
-    G: Data<NodeWeight = NW, EdgeWeight = EW>
-        + NodeIndexable
-        + GraphProp
-        + DataMap
-        + GraphBase<EdgeId = E, NodeId = N>,
-    E: Copy + PartialEq,
-    N: Copy + PartialEq,
-    for<'b> &'b G: IntoNodeReferences
-        + IntoEdgeReferences
-        + IntoEdges
-        + Data<NodeWeight = NW, EdgeWeight = EW>
-        + GraphBase<EdgeId = E, NodeId = N>,
-    EW: PartialEq + Clone,
-    NW: PartialEq + Clone,
+    G: Data +
+       NodeIndexable +
+       GraphProp +
+       IntoNodeReferences +
+       IntoEdgeReferences +
+       IntoEdges +
+       DataMap +
+       GraphBase,
+    <G as GraphBase>::EdgeId: Copy + PartialEq,
+    <G as GraphBase>::NodeId: Copy + PartialEq,
+    <G as Data>::EdgeWeight: PartialEq + Clone,
+    <G as Data>::NodeWeight: PartialEq + Clone,
     Input: Clone,
 {
-    pub fn next<'c>(&'c mut self, input: Input) -> Option<(Action, NW)> {
+    pub fn next<'c>(&'c mut self, input: Input) -> Option<(Action, G::NodeWeight)> {
         for edge in (&self.state_network).edges(self.state) {
             match (self.match_inputs)(input.clone(), edge.weight().clone()) {
                 Some(matched_transition) => {
@@ -67,16 +63,16 @@ where
         return None;
     }
 
-    pub fn set_state<'c>(&'c mut self, state: NW) {
+    pub fn set_state<'c>(&'c mut self, state: G::NodeWeight) {
         get_id_for_state(&self.state_network, state).map(|id| self.state = id);
     }
 
     pub fn new(
         network: G,
-        start: NW,
-        match_inputs: &'a dyn Fn(Input, EW) -> Option<Action>,
+        start: <G as Data>::NodeWeight,
+        match_inputs: &'a dyn Fn(Input, G::EdgeWeight) -> Option<Action>,
     ) -> Option<
-        StateMachine<'a, G, <G as GraphBase>::EdgeId, <G as GraphBase>::NodeId, NW, EW, Input, Action>,
+        StateMachine<'a, G, Input, Action>,
     > {
         get_id_for_state(&network, start).map(|id| StateMachine {
             state_network: network,
@@ -105,7 +101,7 @@ mod tests {
         sn.add_edge(sn_item2, sn_item5, 2);
         sn.add_edge(sn_item5, sn_item1, 2);
         sn.add_edge(sn_item5, sn_item3, 1);
-        let mut sm = StateMachine::new(sn, "a", &|ew1, ew2| {
+        let mut sm = StateMachine::new(&sn, "a", &|ew1, ew2| {
             if ew1 == ew2 {
                 Some(())
             } else {
