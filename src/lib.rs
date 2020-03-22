@@ -20,7 +20,7 @@ fn get_id_for_state<'a, G>(
     state: <G as Data>::NodeWeight,
 ) -> Option<<G as GraphBase>::NodeId>
 where
-    G: IntoNodeReferences + GraphBase + DataMap + Data,
+    G: IntoNodeReferences + GraphBase + DataMap,
     <G as Data>::NodeWeight: PartialEq,
 {
     for nr in network.node_references() {
@@ -33,14 +33,7 @@ where
 
 impl<'a, G, Input, Action> StateMachine<'a, G, Input, Action>
 where
-    G: Data +
-       NodeIndexable +
-       GraphProp +
-       IntoNodeReferences +
-       IntoEdgeReferences +
-       IntoEdges +
-       DataMap +
-       GraphBase,
+    G: Data + NodeIndexable + IntoNodeReferences + IntoEdges + DataMap + GraphBase,
     <G as GraphBase>::EdgeId: Copy + PartialEq,
     <G as GraphBase>::NodeId: Copy + PartialEq,
     <G as Data>::EdgeWeight: PartialEq + Clone,
@@ -71,9 +64,7 @@ where
         network: G,
         start: <G as Data>::NodeWeight,
         match_inputs: &'a dyn Fn(Input, G::EdgeWeight) -> Option<Action>,
-    ) -> Option<
-        StateMachine<'a, G, Input, Action>,
-    > {
+    ) -> Option<StateMachine<'a, G, Input, Action>> {
         get_id_for_state(&network, start).map(|id| StateMachine {
             state_network: network,
             state: id,
