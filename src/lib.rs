@@ -73,6 +73,14 @@ where
         get_id_for_state(&self.state_network, state).map(|id| self.state = id);
     }
 
+    pub fn set_state_id<'c>(&'c mut self, state: G::NodeId) {
+        self.state = state;
+    }
+
+    pub fn get_state_id<'c>(&'c self) -> G::NodeId {
+        self.state
+    }
+
     pub fn new(
         network: G,
         start: <G as Data>::NodeWeight,

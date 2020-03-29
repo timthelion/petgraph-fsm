@@ -26,12 +26,15 @@ where
         match_inputs: &'a dyn Fn(Input, G::EdgeWeight) -> Option<Action>,
     ) -> Option<WalkingSelector<'a, G, Input, Action>>{
         StateMachine::new(network, start, match_inputs)
-            .map(|sm|
-                 WalkingSelector{
-                     state_machine: sm,
-                     selection: Selection::new(network),
-                 }
-            )
+            .map(|sm| {
+                let state = sm.get_state_id();
+                let mut ws = WalkingSelector{
+                    state_machine: sm,
+                    selection: Selection::new(network),
+                };
+                ws.selection.select_node(state);
+                ws
+            })
     }
 
     pub fn next<'c>(&'c mut self, input: Input) -> Option<(Action, G::NodeWeight)> {
