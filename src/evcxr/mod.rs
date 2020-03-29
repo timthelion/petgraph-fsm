@@ -3,25 +3,23 @@ use petgraph_evcxr::draw_graph_with_attr_getters;
 
 use crate::*;
 
-impl<'a, G, E, N, EW, NW, Input, Action> StateMachine<'a, G, E, N, NW, EW, Input, Action>
+impl<'a, G, Input, Action> StateMachine<'a, G, Input, Action>
 where
     G: NodeIndexable
-        + GraphProp
-        + GraphBase<EdgeId = E, NodeId = N>
-        + Data<NodeWeight = NW, EdgeWeight = EW>,
-    E: Copy + PartialEq,
-    N: Copy + PartialEq,
-    for<'b> &'b G: IntoNodeReferences
-        + IntoEdgeReferences
-        + IntoEdges
-        + GraphBase<EdgeId = E, NodeId = N>
-        + Data<NodeWeight = NW, EdgeWeight = EW>,
-    EW: std::fmt::Display,
-    NW: std::fmt::Display,
+    + IntoEdgeReferences
+    + IntoEdges
+    + IntoNodeReferences
+    + GraphProp
+    + GraphBase
+    + Data,
+    G::NodeId: Copy + PartialEq,
+    G::EdgeId: Copy + PartialEq,
+    G::EdgeWeight: std::fmt::Display,
+    G::NodeWeight: std::fmt::Display,
 {
     pub fn draw_evcxr(&self) {
         draw_graph_with_attr_getters(
-            &self.state_network,
+            self.state_network,
             &[],
             &|_, _| "".to_string(),
             &|_, nr| {
