@@ -3,6 +3,9 @@ extern crate petgraph;
 #[cfg(feature = "evcxr")]
 pub mod evcxr;
 
+#[cfg(feature = "select")]
+pub mod select;
+
 use petgraph::data::*;
 use petgraph::visit::*;
 
@@ -41,14 +44,24 @@ where
     Input: Clone,
 {
     pub fn next<'c>(&'c mut self, input: Input) -> Option<(Action, G::NodeWeight)> {
+        let refs = self.next_refs(input);
+        match refs {
+            Some((matched_transition, _, state)) => {
+                return match self.state_network.node_weight(state) {
+                    Some(weight) => Some((matched_transition, weight.clone())),
+                    None => None,
+                }
+            },
+            None => None,
+        }
+    }
+
+    pub fn next_refs<'c>(&'c mut self, input: Input) -> Option<(Action, G::EdgeRef, G::NodeId)> {
         for edge in (&self.state_network).edges(self.state) {
             match (self.match_inputs)(input.clone(), edge.weight().clone()) {
                 Some(matched_transition) => {
                     self.state = edge.target();
-                    return match self.state_network.node_weight(self.state) {
-                        Some(weight) => Some((matched_transition, weight.clone())),
-                        None => None,
-                    };
+                    return Some((matched_transition, edge, self.state));
                 }
                 None => (),
             }

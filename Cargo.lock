@@ -45,6 +45,15 @@ version = "0.1.0"
 dependencies = [
  "petgraph 0.5.0",
  "petgraph-evcxr 0.1.1",
+ "petgraph-overlay 0.1.0",
+]
+
+[[package]]
+name = "petgraph-overlay"
+version = "0.1.0"
+dependencies = [
+ "petgraph 0.5.0",
+ "petgraph-evcxr 0.1.1",
 ]
 
 [metadata]

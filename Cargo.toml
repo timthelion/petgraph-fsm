@@ -11,8 +11,10 @@ repository = "https://github.com/timthelion/petgraph-fsm"
 
 [features]
 evcxr = ["petgraph-evcxr"]
+select = ["petgraph-overlay"]
 default = []
 
 [dependencies]
 petgraph = {path="../petgraph"}
 petgraph-evcxr = {path="../petgraph-evcxr", optional=true}
+petgraph-overlay = {path="../petgraph-overlay", optional=true}
