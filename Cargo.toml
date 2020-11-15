@@ -15,6 +15,6 @@ select = ["petgraph-overlay"]
 default = []
 
 [dependencies]
-petgraph = {path="../petgraph"}
+petgraph = ">=0.5.1"
 petgraph-evcxr = {path="../petgraph-evcxr", optional=true}
 petgraph-overlay = {path="../petgraph-overlay", optional=true}
